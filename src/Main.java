@@ -37,7 +37,8 @@ public class Main implements Share {
     // public PercentPan percPan;
     public int nodeType;
     public int width, height;
-    public testframe tFrame;
+    //public testframe tFrame;
+    public DrawData tFrame;
             
 
     public Main() {
@@ -94,9 +95,10 @@ public class Main implements Share {
         freqFr.setVisible(true);
         levName.setVisible(true);
         freqFr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        tFrame = new testframe();
-        tFrame.setBounds(50,50,1000,800);
-        tFrame.setVisible(true);
+        //Frame = new testframe();
+        tFrame = new DrawData();
+        //tFrame.setBounds(50,50,1250,1250);
+        //tFrame.setVisible(true);
 
     }
 

@@ -344,7 +344,7 @@ public class DiscreteFourierTransform extends BaseDataProcessor implements Share
             //*************** grab the output of FFT by cclo / every 0.01 sec FFTNo double frequency data ********************
             DoubleData output = (DoubleData) input;
             double cc[] = output.getValues();
-            getVoid(cc);
+            getVoid2(cc);
 
         }
 
@@ -727,28 +727,133 @@ public class DiscreteFourierTransform extends BaseDataProcessor implements Share
         System.out.println(Arrays.toString(chPrint));
     }*/
     public void getVoid2(double voice[]) {
+
+        int peakIdx[] = new int[pkNo];
+        double peakValue[] = new double[pkNo];
+        boolean isPeak[] = new boolean[FFTNo];
+
+        specSum = 0.0;
+
         for (int i = 0; i < FFTNo; i++) {
-            shortVec[i] = shortVec[i] * 0.95 + voice[i] * 0.05; // short pattern
+            isPeak[i] = true;
+        }
+
+        double ratio;
+        for (int i = 0; i < FFTNo; i++) {
+            shortVec[i] = shortVec[i] * 0.95+ voice[i] * 0.05; // short pattern
+            specSum += shortVec[i];
+        }
+        if (specSum < minSpecSum) {
+            minSpecSum = specSum;
+        }
+        avgSpecMag = specSum / (double) FFTNo;
+
+        for (int i = 0; i < FFTNo; i++) {
             featureFreq[i] = Math.log10(shortVec[i]);
+            // featureFreq[i] = shortVec[i];
         }
         pMain.freqFr.updateSpec(featureFreq);
+
+        peakIdx[0] = -1;
+        peakValue[0] = Double.MIN_VALUE;
+
+        int low = 1, up;
+        int cut = 5;
+        int firstPeak = -1;
+        boolean isFirstPeak = true;
+        int leftOff = 5, rightOff = 5;
+        for (int i = 0; i < FFTNo; i++) {
+            if (i < cut) {
+                isPeak[i] = false;
+                continue;
+            }
+            if (isFirstPeak) {
+                low = (i < cut ? cut : low);
+                up = i + i - 3;
+
+                if (up > FFTNo - 1) {
+                    up = FFTNo - 1;
+                }
+            } else {
+                low = i - leftOff;
+                up = i + rightOff;
+                if (up > FFTNo - 1) {
+                    up = FFTNo - 1;
+                }
+            }
+
+            for (int j = low; j <= up; j++) {
+                if (featureFreq[i] < featureFreq[j]) {
+                    isPeak[i] = false;
+                    break;
+                }
+            }
+
+            if (isPeak[i]) {
+                if (isFirstPeak) {
+                    leftOff = i - 3;
+                    rightOff = i - 3;
+                    isFirstPeak = false;
+                }
+                if (featureFreq[i] > peakValue[0]) {
+                    peakIdx[0] = i;
+                    peakValue[0] = featureFreq[i];
+                }
+            }
+        }
+
+        pMain.freqFr.updateSpec(featureFreq);
+        peakAvg = peakAvg * 0.96 + peakValue[0] * 0.04;
+        avgSpecSum = avgSpecSum * DecayRate + specSum * (1.0 - DecayRate);
+        avgSpecMag = avgSpecSum / (double) FFTNo;
+        if (count == 0) {
+            // System.out.print("\nPeak Avg: " + peakAvg);
+            // System.out.print("\nSpecSum Avg: " + avgSpecSum);
+        }
+        count = (++count) % 1000;
+        int val = 0;
+        if (specSum > minSpecSum * SPEC_RATIO) { // && specSum > 1.001 * avgSpecSum) { // && specSum > 9020.0) {
+            silent = false;
+
+            for (int i = 0; i < FFTNo; i++) {
+                if (isPeak[i]) { // // && shortVec[i] > avgSpecMag * 1.0) {
+                    val = 1;
+                    // System.out.print(" " + i);
+                } else {
+                    isPeak[i] = false;
+                    val = 0;
+                }
+                // pMain.specFr.wChart2.updateSeries(i, val);
+            }
+            pMain.scorer.matchLevel(isPeak);
+
+        } else {
+            if (!silent) {
+                // System.out.print("\nS ");
+                pMain.scorer.resetLevel();
+                silent = true;
+                pMain.scorer.resetLevel();
+            }
+//            stable = true;
+//            DecayRate = 0.996;
+            pMain.freqFr.updateSpec(featureFreq);
+        }
         //----------------------------------------------------------------------
-        int max=0;
-        int min=99999;
-        for(int i = 0; i < FFTNo; i++){//找出最大最小值
-            if(max < featureFreq[i]){
-                max = (int)featureFreq[i];
+        double max = 0;
+        double min = 99999;
+        for (int i = 0; i < FFTNo; i++) {//找出最大最小值
+            if (max < featureFreq[i]) {
+                max = featureFreq[i];
             }
-            else if(min > featureFreq[i]){
-                min = (int)featureFreq[i];
+            if (min > featureFreq[i]) {
+                min = featureFreq[i];
             }
         }
-        int encode=(int)(max-min);
-        int encodeFreq[]=new int[FFTNo];
-        for(int i = 0; i < FFTNo; i++){
-            encodeFreq[i]=((int)featureFreq[i]/encode)+min;
+        double encode = max - min;
+        int encodeFreq[] = new int[FFTNo];
+        for (int i = 0; i < FFTNo; i++) {
+            encodeFreq[i] = (int)((featureFreq[i] - min) * (255 / encode));
         }
-        
-        
+        pMain.tFrame.putdata(encodeFreq); 
     }
 }

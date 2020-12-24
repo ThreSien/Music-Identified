@@ -21,7 +21,7 @@ import javax.swing.JFrame;
  */
 public class testframe extends JFrame {
 
-    String out = "ccc";
+    String out = "";
     List<String> list = new LinkedList<>();
 
     public testframe() {

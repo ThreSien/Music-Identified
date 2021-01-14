@@ -47,9 +47,7 @@ public class DrawData extends JFrame {
     }
 
     public void putdata(int encodeFreq[]) {
-        if (true) {
-            return;
-        }
+     
         cnt++;
         if (cnt < 10) {
             return;
@@ -110,9 +108,9 @@ public class DrawData extends JFrame {
 //                    out.remove(0);
 //                } else {
 //                    //i=0;
-//                    x = 10;
-//                    y += 20;
-//                    list.remove();
+    //                    y += 20;
+    //                    list.remove(); x = 10;
+//                   
 //                }
 //            }
 

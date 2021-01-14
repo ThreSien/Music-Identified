@@ -854,6 +854,8 @@ public class DiscreteFourierTransform extends BaseDataProcessor implements Share
         for (int i = 0; i < FFTNo; i++) {
             encodeFreq[i] = (int)((featureFreq[i] - min) * (255 / encode));
         }
+        
+        // System.out.println("pudata");
         pMain.tFrame.putdata(encodeFreq); 
     }
 }
